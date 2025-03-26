@@ -37,9 +37,10 @@
          must be a menu. -->
 		<!--<Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_ITEMNODE"/>-->
 		<!--<Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_SOLUTION"/>-->
+		<!--<Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_PROJNODE"/>-->
 		<Groups>
 			<Group guid="guidCSharpConvertToProtoPackageCmdSet" id="MyMenuGroup" priority="0x0600">
-				<Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_PROJNODE"/>
+				<Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_FOLDERNODE"/>
 			</Group>
 		</Groups>
 

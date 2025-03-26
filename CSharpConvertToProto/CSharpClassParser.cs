@@ -1,37 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.MSBuild;
 
 namespace CSharpConvertToProto
 {
     public class CSharpClassParser
     {
-        public Dictionary<string, ClassNode> ParseSolution(string solutionPath)
+        public Dictionary<string, ClassNode> ParseFolder(string folderPath)
         {
-            if (!File.Exists(solutionPath) || !solutionPath.EndsWith(".sln"))
-                throw new ArgumentException("Il percorso fornito non è valido o non è una solution.");
-
-            var workspace = MSBuildWorkspace.Create();
-            var solution = workspace.OpenSolutionAsync(solutionPath).Result;
-
             var classNodes = new Dictionary<string, ClassNode>();
-
-            foreach (var project in solution.Projects)
+            foreach (var file in Directory.GetFiles(folderPath, "*.cs", SearchOption.AllDirectories))
             {
-                foreach (var document in project.Documents.Where(d => d.FilePath.EndsWith(".cs")))
-                {
-                    var syntaxTree = document.GetSyntaxTreeAsync().Result;
-                    if (syntaxTree != null)
-                    {
-                        ParseSyntaxTree(syntaxTree, classNodes);
-                    }
-                }
+                var syntaxTree = Microsoft.CodeAnalysis.CSharp.CSharpSyntaxTree.ParseText(File.ReadAllText(file));
+                ParseSyntaxTree(syntaxTree, classNodes);
             }
-
             return classNodes;
         }
 
@@ -39,19 +23,17 @@ namespace CSharpConvertToProto
         {
             var root = syntaxTree.GetRoot();
 
+            // Analizza le classi
             foreach (var node in root.DescendantNodes().OfType<ClassDeclarationSyntax>())
             {
-                var classNode = new ClassNode
-                {
-                    Name = node.Identifier.Text
-                };
+                if (!IsModelClass(node)) continue;
+                var classNode = new ClassNode { Name = node.Identifier.Text };
 
                 foreach (var member in node.Members.OfType<PropertyDeclarationSyntax>())
                 {
                     classNode.Properties.Add(new PropertyNode
                     {
                         Name = member.Identifier.Text,
-                        //Type = NormalizeType(member.Type.ToString())
                         Type = member.Type.ToString()
                     });
                 }
@@ -59,6 +41,7 @@ namespace CSharpConvertToProto
                 classNodes[classNode.Name] = classNode;
             }
 
+            // Analizza gli enum
             foreach (var node in root.DescendantNodes().OfType<EnumDeclarationSyntax>())
             {
                 var enumNode = new ClassNode
@@ -76,10 +59,23 @@ namespace CSharpConvertToProto
             }
         }
 
-        //private string NormalizeType(string type)
-        //{
-        //    return type.Replace(">", "").Trim();
-        //}
+
+        private bool IsModelClass(ClassDeclarationSyntax classDeclaration)
+        {
+            var hasBaseClass = classDeclaration.BaseList?.Types
+                .Any(t => t.Type.ToString().EndsWith("Controller") ||
+                          t.Type.ToString().EndsWith("Service") ||
+                          t.Type.ToString().EndsWith("Repository") ||
+                          t.Type.ToString().EndsWith("ViewModel")) ?? false;
+
+            if (hasBaseClass) return false;
+
+            var hasPublicProperties = classDeclaration.Members
+                .OfType<PropertyDeclarationSyntax>()
+                .Any(p => p.Modifiers.Any(m => m.Text == "public") && p.AccessorList != null);
+
+            return hasPublicProperties;
+        }
     }
 
     public class ClassNode
