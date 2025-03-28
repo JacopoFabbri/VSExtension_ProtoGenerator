@@ -2,6 +2,7 @@
 using System.ComponentModel.Design;
 using System.IO;
 using System.Linq;
+using System.Windows.Forms;
 using CSharpConvertToProto.Windows;
 using EnvDTE;
 using EnvDTE80;
@@ -82,14 +83,23 @@ namespace CSharpConvertToProto
                                 }
 
                                 string protoContent = generator.GenerateProto(classMap.Values.ToList(), selectedClass, serviceTOAddAtProtoEnums, nameSpace);
-                                string protoPath = Path.Combine(selectedFolder, $"{selectedClass}.proto");
-                                File.WriteAllText(protoPath, protoContent);
 
-                                AddFileToSolution(dte, protoPath);
+                                using (var dialog = new FolderBrowserDialog())
+                                {
+                                    dialog.SelectedPath = selectedFolder;
+                                    DialogResult result = dialog.ShowDialog();
+                                    if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(dialog.SelectedPath))
+                                    {
+                                        string protoPath = Path.Combine(dialog.SelectedPath, $"{selectedClass}.proto");
+                                        File.WriteAllText(protoPath, protoContent);
 
-                                VsShellUtilities.ShowMessageBox(
-                                    this.package, $"File proto generato: {protoPath}", "ConvertToProtoCommand",
-                                    OLEMSGICON.OLEMSGICON_INFO, OLEMSGBUTTON.OLEMSGBUTTON_OK, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+                                        AddFileToSolution(dte, protoPath);
+
+                                        VsShellUtilities.ShowMessageBox(
+                                            this.package, $"File proto generato: {protoPath}", "ConvertToProtoCommand",
+                                            OLEMSGICON.OLEMSGICON_INFO, OLEMSGBUTTON.OLEMSGBUTTON_OK, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+                                    }
+                                }
                             }
                         }
                     }
