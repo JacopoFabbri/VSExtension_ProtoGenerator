@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using CSharpConvertToProto.Models;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -76,19 +77,5 @@ namespace CSharpConvertToProto
 
             return hasPublicProperties;
         }
-    }
-
-    public class ClassNode
-    {
-        public string Name { get; set; }
-        public List<PropertyNode> Properties { get; set; } = new List<PropertyNode>();
-        public bool IsEnum { get; set; } = false;
-        public List<string> EnumValues { get; set; } = new List<string>();
-    }
-
-    public class PropertyNode
-    {
-        public string Name { get; set; }
-        public string Type { get; set; }
     }
 }

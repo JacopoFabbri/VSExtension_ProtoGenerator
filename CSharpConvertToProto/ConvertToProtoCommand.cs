@@ -2,9 +2,9 @@
 using System.ComponentModel.Design;
 using System.IO;
 using System.Linq;
+using CSharpConvertToProto.Windows;
 using EnvDTE;
 using EnvDTE80;
-using Microsoft.CodeAnalysis;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Task = System.Threading.Tasks.Task;
@@ -66,15 +66,33 @@ namespace CSharpConvertToProto
                     ProtoGenerator generator = new ProtoGenerator();
                     classMap.TryGetValue(selectedClass, out var classNode);
 
-                    string protoContent = generator.GenerateProto(classMap.Values.ToList(), selectedClass);
-                    string protoPath = Path.Combine(selectedFolder, $"{selectedClass}.proto");
-                    File.WriteAllText(protoPath, protoContent);
+                    ServicesSelectorWindow servicesSelectorWindow = new ServicesSelectorWindow();
+                    if (servicesSelectorWindow.ShowDialog() == true)
+                    {
+                        var serviceTOAddAtProtoEnums = servicesSelectorWindow.SelectItems;
+                        if (serviceTOAddAtProtoEnums.Any())
+                        {
+                            SpecifyNamespaceWindow specifyNamespaceWindow = new SpecifyNamespaceWindow();
+                            if (specifyNamespaceWindow.ShowDialog() == true)
+                            {
+                                var nameSpace = specifyNamespaceWindow.NameSpaceInput;
+                                if (string.IsNullOrEmpty(nameSpace))
+                                {
+                                    nameSpace = "Generated";
+                                }
 
-                    AddFileToSolution(dte, protoPath);
+                                string protoContent = generator.GenerateProto(classMap.Values.ToList(), selectedClass, serviceTOAddAtProtoEnums, nameSpace);
+                                string protoPath = Path.Combine(selectedFolder, $"{selectedClass}.proto");
+                                File.WriteAllText(protoPath, protoContent);
 
-                    VsShellUtilities.ShowMessageBox(
-                        this.package, $"File proto generato: {protoPath}", "ConvertToProtoCommand",
-                        OLEMSGICON.OLEMSGICON_INFO, OLEMSGBUTTON.OLEMSGBUTTON_OK, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+                                AddFileToSolution(dte, protoPath);
+
+                                VsShellUtilities.ShowMessageBox(
+                                    this.package, $"File proto generato: {protoPath}", "ConvertToProtoCommand",
+                                    OLEMSGICON.OLEMSGICON_INFO, OLEMSGBUTTON.OLEMSGBUTTON_OK, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+                            }
+                        }
+                    }
                 }
             }
         }
