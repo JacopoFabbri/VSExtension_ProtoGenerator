@@ -45,6 +45,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Windows\CustomizationWindow.xaml.cs">
+      <DependentUpon>CustomizationWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Windows\ClassSelectionWindow.xaml.cs">
       <DependentUpon>ClassSelectionWindow.xaml</DependentUpon>
     </Compile>
@@ -103,6 +106,10 @@
     <Content Include="Resources\ConvertToProtoCommand.png" />
   </ItemGroup>
   <ItemGroup>
+    <Page Include="Windows\CustomizationWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="Windows\ClassSelectionWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

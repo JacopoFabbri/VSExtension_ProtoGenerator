@@ -81,23 +81,30 @@ namespace CSharpConvertToProto
                                 {
                                     nameSpace = "Generated";
                                 }
-
-                                string protoContent = generator.GenerateProto(classMap.Values.ToList(), selectedClass, serviceTOAddAtProtoEnums, nameSpace);
-
-                                using (var dialog = new FolderBrowserDialog())
+                                CustomizationWindow customizationWindow = new CustomizationWindow();
+                                if (customizationWindow.ShowDialog() == true)
                                 {
-                                    dialog.SelectedPath = selectedFolder;
-                                    DialogResult result = dialog.ShowDialog();
-                                    if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(dialog.SelectedPath))
+
+                                    string protoContent = generator.GenerateProto(classMap.Values.ToList(), selectedClass,
+                                        serviceTOAddAtProtoEnums, nameSpace, customizationWindow.CustomizationValue,
+                                        customizationWindow.ToRemoveValue);
+
+                                    using (var dialog = new FolderBrowserDialog())
                                     {
-                                        string protoPath = Path.Combine(dialog.SelectedPath, $"{selectedClass}.proto");
-                                        File.WriteAllText(protoPath, protoContent);
+                                        dialog.SelectedPath = selectedFolder;
+                                        DialogResult result = dialog.ShowDialog();
+                                        if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(dialog.SelectedPath))
+                                        {
+                                            string protoPath = Path.Combine(dialog.SelectedPath, $"{selectedClass}.proto");
+                                            File.WriteAllText(protoPath, protoContent);
 
-                                        AddFileToSolution(dte, protoPath);
+                                            AddFileToSolution(dte, protoPath);
 
-                                        VsShellUtilities.ShowMessageBox(
-                                            this.package, $"File proto generato: {protoPath}", "ConvertToProtoCommand",
-                                            OLEMSGICON.OLEMSGICON_INFO, OLEMSGBUTTON.OLEMSGBUTTON_OK, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+                                            VsShellUtilities.ShowMessageBox(
+                                                this.package, $"File proto generato: {protoPath}", "ConvertToProtoCommand",
+                                                OLEMSGICON.OLEMSGICON_INFO, OLEMSGBUTTON.OLEMSGBUTTON_OK, 
+                                                    OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+                                        }
                                     }
                                 }
                             }

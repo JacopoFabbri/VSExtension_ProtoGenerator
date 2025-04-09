@@ -1,0 +1,17 @@
+﻿<Window x:Class="CSharpConvertToProto.CustomizationWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Seleziona Classe" Height="150" Width="400">
+    <Grid Margin="0,0,0,0">
+        <!-- Barra di ricerca -->
+        <TextBox Name="Customization" Margin="10,10,10,0" VerticalAlignment="Top" 
+                 HorizontalAlignment="Stretch" Height="25">
+        </TextBox>
+
+        <!-- Barra di ricerca -->
+        <TextBox Name="ToRemove" Margin="10,40,10,0" VerticalAlignment="Top" Height="25" />
+
+        <!-- Bottone di selezione -->
+        <Button Content="Seleziona" HorizontalAlignment="Right" Margin="10" VerticalAlignment="Bottom" Width="80" Click="OnSelectClick"/>
+    </Grid>
+</Window>

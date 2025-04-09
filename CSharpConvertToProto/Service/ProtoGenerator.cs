@@ -10,7 +10,7 @@ public class ProtoGenerator
     private readonly StringBuilder _pendingMessages = new StringBuilder();
     private readonly HashSet<string> _processedClasses = new HashSet<string>();
 
-    public string GenerateProto(IEnumerable<ClassNode> classNodes, string rootClassName, List<ServiceTOAddAtProtoEnum> serviceTOAddAtProtoEnums, string nameSpace)
+    public string GenerateProto(IEnumerable<ClassNode> classNodes, string rootClassName, List<ServiceTOAddAtProtoEnum> serviceTOAddAtProtoEnums, string nameSpace, string customization, string toRemove)
     {
         _pendingMessages.Clear();
         _processedClasses.Clear();
@@ -21,7 +21,7 @@ public class ProtoGenerator
 
         foreach (var enumNode in classNodes.Where(node => node.IsEnum))
         {
-            protoBuilder.Append(GenerateEnum(enumNode));
+            protoBuilder.Append(GenerateEnum(enumNode, customization, toRemove));
         }
 
         var rootNode = classNodes.FirstOrDefault(node => node.Name == rootClassName);
@@ -30,14 +30,14 @@ public class ProtoGenerator
             throw new ArgumentException(string.Format("Classe {0} non trovata.", rootClassName));
         }
 
-        protoBuilder.Append(GenerateMessage(rootNode, classNodes));
+        protoBuilder.Append(GenerateMessage(rootNode, classNodes, customization, toRemove));
         protoBuilder.Append(_pendingMessages);
-        protoBuilder.Append(GenerateService(rootNode, serviceTOAddAtProtoEnums));
+        protoBuilder.Append(GenerateService(rootNode, serviceTOAddAtProtoEnums, customization, toRemove));
 
         return protoBuilder.ToString();
     }
 
-    private string GenerateMessage(ClassNode classNode, IEnumerable<ClassNode> classNodes)
+    private string GenerateMessage(ClassNode classNode, IEnumerable<ClassNode> classNodes, string customization, string toRemove)
     {
         if (_processedClasses.Contains(classNode.Name) || classNode.IsEnum)
         {
@@ -46,7 +46,7 @@ public class ProtoGenerator
 
         _processedClasses.Add(classNode.Name);
         var messageBuilder = new StringBuilder();
-        messageBuilder.AppendLine(string.Format("message {0} {{", classNode.Name));
+        messageBuilder.AppendLine(string.Format("message {0} {{", classNode.CustomizeNameProto(toRemove,customization)));
 
         int fieldIndex = 1;
         foreach (var property in classNode.Properties)
@@ -58,7 +58,7 @@ public class ProtoGenerator
             var referencedClass = classNodes.FirstOrDefault(node => node.Name == propertyTypeName);
             if (referencedClass != null && !_processedClasses.Contains(propertyTypeName))
             {
-                _pendingMessages.Append(GenerateMessage(referencedClass, classNodes));
+                _pendingMessages.Append(GenerateMessage(referencedClass, classNodes, customization, toRemove));
             }
         }
 
@@ -66,10 +66,10 @@ public class ProtoGenerator
         return messageBuilder.ToString();
     }
 
-    private string GenerateEnum(ClassNode enumNode)
+    private string GenerateEnum(ClassNode enumNode, string customization, string toRemove)
     {
         var enumBuilder = new StringBuilder();
-        enumBuilder.AppendLine(string.Format("enum {0} {{", enumNode.Name));
+        enumBuilder.AppendLine(string.Format("enum {0} {{", enumNode.CustomizeNameProto(toRemove, customization)));
         for (int i = 0; i < enumNode.EnumValues.Count; i++)
         {
             enumBuilder.AppendLine(string.Format("  {0}_{1} = {2};", enumNode.Name, enumNode.EnumValues[i], i));
@@ -78,7 +78,7 @@ public class ProtoGenerator
         return enumBuilder.ToString();
     }
 
-    private string GenerateService(ClassNode rootClass, List<ServiceTOAddAtProtoEnum> serviceTOAddAtProtoEnums)
+    private string GenerateService(ClassNode rootClass, List<ServiceTOAddAtProtoEnum> serviceTOAddAtProtoEnums, string customization, string toRemove)
     {
         var serviceBuilder = new StringBuilder();
         serviceBuilder.AppendLine(string.Format("service {0}Service {{", rootClass.Name));
@@ -103,14 +103,14 @@ public class ProtoGenerator
 
         if (serviceTOAddAtProtoEnums.Contains(ServiceTOAddAtProtoEnum.GET))
         {
-            serviceBuilder.AppendLine(string.Format("message Get{0}Request {{", rootClass.Name));
+            serviceBuilder.AppendLine(string.Format("message Get{0}Request {{", rootClass.CustomizeNameProto(toRemove, customization)));
             serviceBuilder.AppendLine("  int32 id = 1;");
             serviceBuilder.AppendLine("}\n");
         }
 
         if (serviceTOAddAtProtoEnums.Contains(ServiceTOAddAtProtoEnum.SET))
         {
-            serviceBuilder.AppendLine(string.Format("message Create{0}Request {{", rootClass.Name));
+            serviceBuilder.AppendLine(string.Format("message Create{0}Request {{", rootClass.CustomizeNameProto(toRemove, customization)));
             int fieldIndex = 1;
             foreach (var property in rootClass.Properties)
             {
@@ -121,7 +121,7 @@ public class ProtoGenerator
 
         if (serviceTOAddAtProtoEnums.Contains(ServiceTOAddAtProtoEnum.UPDATE))
         {
-            serviceBuilder.AppendLine(string.Format("message Update{0}Request {{", rootClass.Name));
+            serviceBuilder.AppendLine(string.Format("message Update{0}Request {{", rootClass.CustomizeNameProto(toRemove, customization)));
             int fieldIndex = 1;
             foreach (var property in rootClass.Properties)
             {
@@ -132,7 +132,7 @@ public class ProtoGenerator
 
         if (serviceTOAddAtProtoEnums.Contains(ServiceTOAddAtProtoEnum.DELETE))
         {
-            serviceBuilder.AppendLine(string.Format("message Delete{0}Request {{", rootClass.Name));
+            serviceBuilder.AppendLine(string.Format("message Delete{0}Request {{", rootClass.CustomizeNameProto(toRemove, customization)));
             serviceBuilder.AppendLine("  int32 id = 1;");
             serviceBuilder.AppendLine("}\n");
         }
