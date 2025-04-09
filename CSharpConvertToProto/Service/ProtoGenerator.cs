@@ -108,7 +108,7 @@ public class ProtoGenerator
             serviceBuilder.AppendLine("}\n");
         }
 
-        if (serviceTOAddAtProtoEnums.Contains(ServiceTOAddAtProtoEnum.GET))
+        if (serviceTOAddAtProtoEnums.Contains(ServiceTOAddAtProtoEnum.SET))
         {
             serviceBuilder.AppendLine(string.Format("message Create{0}Request {{", rootClass.Name));
             int fieldIndex = 1;
