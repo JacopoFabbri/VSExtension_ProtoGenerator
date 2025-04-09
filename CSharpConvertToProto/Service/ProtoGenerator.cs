@@ -72,7 +72,7 @@ public class ProtoGenerator
         enumBuilder.AppendLine(string.Format("enum {0} {{", enumNode.Name));
         for (int i = 0; i < enumNode.EnumValues.Count; i++)
         {
-            enumBuilder.AppendLine(string.Format("  {0} = {1};", enumNode.EnumValues[i], i));
+            enumBuilder.AppendLine(string.Format("  {0}_{1} = {2};", enumNode.Name, enumNode.EnumValues[i], i));
         }
         enumBuilder.AppendLine("}\n");
         return enumBuilder.ToString();
