@@ -17,8 +17,10 @@ public class ProtoGenerator
 
         var protoBuilder = new StringBuilder();
         protoBuilder.AppendLine("syntax = \"proto3\";");
+        protoBuilder.AppendLine("import \"google/protobuf/timestamp.proto\";");
+        protoBuilder.AppendLine("import \"google/protobuf/wrappers.proto\";");
         protoBuilder.AppendLine($"\npackage {nameSpace};\n");
-
+        
         foreach (var enumNode in classNodes.Where(node => node.IsEnum))
         {
             protoBuilder.Append(GenerateEnum(enumNode));
