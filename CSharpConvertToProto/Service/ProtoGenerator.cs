@@ -19,6 +19,7 @@ public class ProtoGenerator
         protoBuilder.AppendLine("syntax = \"proto3\";");
         protoBuilder.AppendLine("import \"google/protobuf/timestamp.proto\";");
         protoBuilder.AppendLine("import \"google/protobuf/wrappers.proto\";");
+        protoBuilder.AppendLine("import \"google/protobuf/any.proto\";");
         protoBuilder.AppendLine($"\npackage {nameSpace};\n");
         
         foreach (var enumNode in classNodes.Where(node => node.IsEnum))
@@ -139,6 +140,8 @@ public class ProtoGenerator
             serviceBuilder.AppendLine("}\n");
         }
 
+
+
         return serviceBuilder.ToString();
     }
 
@@ -157,9 +160,9 @@ public class ProtoGenerator
             case "float": return "float";
             case "double": return "double";
             case "bool": return "bool";
-            case "string": return "string";
+            case "string": return "google.protobuf.StringValue";
             case "decimal": return "double";
-            case "DateTime": return "string";
+            case "DateTime": return "google.protobuf.Timestamp";
             default: return classNodes.Any(node => node.Name == baseType) ? baseType : "string";
         }
     }
