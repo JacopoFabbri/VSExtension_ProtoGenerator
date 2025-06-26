@@ -1,16 +1,15 @@
-﻿using System;
+﻿using CSharpConvertToProto.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using CSharpConvertToProto.Models;
-using CSharpConvertToProto.Models.Enum;
 
 public class ProtoGenerator
 {
     private readonly StringBuilder _pendingMessages = new StringBuilder();
     private readonly HashSet<string> _processedClasses = new HashSet<string>();
 
-    public string GenerateProto(IEnumerable<ClassNode> classNodes, string rootClassName, List<ServiceTOAddAtProtoEnum> serviceTOAddAtProtoEnums, string nameSpace)
+    public string GenerateProto(IEnumerable<ClassNode> classNodes, string nameSpace)
     {
         _pendingMessages.Clear();
         _processedClasses.Clear();
@@ -21,21 +20,36 @@ public class ProtoGenerator
         protoBuilder.AppendLine("import \"google/protobuf/wrappers.proto\";");
         protoBuilder.AppendLine("import \"google/protobuf/any.proto\";");
         protoBuilder.AppendLine($"\npackage {nameSpace};\n");
-        
+
+        classNodes = classNodes
+            .GroupBy(n => n.Name)
+            .Select(g => g.First())
+            .ToList();
+
+        foreach (var classNode in classNodes)
+        {
+            classNode.Name = classNode.Name.Contains("Infra") ? classNode.Name.Replace("Infra", "Grpc") : classNode.Name;
+        }
+
         foreach (var enumNode in classNodes.Where(node => node.IsEnum))
         {
             protoBuilder.Append(GenerateEnum(enumNode));
         }
 
-        var rootNode = classNodes.FirstOrDefault(node => node.Name == rootClassName);
-        if (rootNode == null)
+        //var rootNode = classNodes.FirstOrDefault(node => node.Name == rootClassName);
+        //if (rootNode == null)
+        //{
+        //    throw new ArgumentException(string.Format("Classe {0} non trovata.", rootClassName));
+        //}
+
+        foreach (var classNode in classNodes.Where(n => !n.IsEnum))
         {
-            throw new ArgumentException(string.Format("Classe {0} non trovata.", rootClassName));
+            protoBuilder.Append(GenerateMessage(classNode, classNodes));
         }
 
-        protoBuilder.Append(GenerateMessage(rootNode, classNodes));
+        //protoBuilder.Append(GenerateMessage(rootNode, classNodes));
         protoBuilder.Append(_pendingMessages);
-        protoBuilder.Append(GenerateService(rootNode, serviceTOAddAtProtoEnums));
+        //protoBuilder.Append(GenerateService(rootNode, serviceTOAddAtProtoEnums));
 
         return protoBuilder.ToString();
     }
@@ -81,69 +95,69 @@ public class ProtoGenerator
         return enumBuilder.ToString();
     }
 
-    private string GenerateService(ClassNode rootClass, List<ServiceTOAddAtProtoEnum> serviceTOAddAtProtoEnums)
-    {
-        var serviceBuilder = new StringBuilder();
-        serviceBuilder.AppendLine(string.Format("service {0}Service {{", rootClass.Name));
+    //private string GenerateService(ClassNode rootClass, List<ServiceTOAddAtProtoEnum> serviceTOAddAtProtoEnums)
+    //{
+    //    var serviceBuilder = new StringBuilder();
+    //    serviceBuilder.AppendLine(string.Format("service {0}Service {{", rootClass.Name));
 
-        if (serviceTOAddAtProtoEnums.Contains(ServiceTOAddAtProtoEnum.GET))
-        {
-            serviceBuilder.AppendLine(string.Format("  rpc Get{0} (Get{0}Request) returns ({0});", rootClass.Name));
-        }
-        if (serviceTOAddAtProtoEnums.Contains(ServiceTOAddAtProtoEnum.SET))
-        {
-            serviceBuilder.AppendLine(string.Format("  rpc Create{0} (Create{0}Request) returns ({0});", rootClass.Name));
-        }
-        if (serviceTOAddAtProtoEnums.Contains(ServiceTOAddAtProtoEnum.UPDATE))
-        {
-            serviceBuilder.AppendLine(string.Format("  rpc Create{0} (Update{0}Request) returns ({0});", rootClass.Name));
-        }
-        if (serviceTOAddAtProtoEnums.Contains(ServiceTOAddAtProtoEnum.DELETE))
-        {
-            serviceBuilder.AppendLine(string.Format("  rpc Create{0} (Delete{0}Request) returns (bool);", rootClass.Name));
-        }
-        serviceBuilder.AppendLine("}\n");
+    //    if (serviceTOAddAtProtoEnums.Contains(ServiceTOAddAtProtoEnum.GET))
+    //    {
+    //        serviceBuilder.AppendLine(string.Format("  rpc Get{0} (Get{0}Request) returns ({0});", rootClass.Name));
+    //    }
+    //    if (serviceTOAddAtProtoEnums.Contains(ServiceTOAddAtProtoEnum.SET))
+    //    {
+    //        serviceBuilder.AppendLine(string.Format("  rpc Create{0} (Create{0}Request) returns ({0});", rootClass.Name));
+    //    }
+    //    if (serviceTOAddAtProtoEnums.Contains(ServiceTOAddAtProtoEnum.UPDATE))
+    //    {
+    //        serviceBuilder.AppendLine(string.Format("  rpc Create{0} (Update{0}Request) returns ({0});", rootClass.Name));
+    //    }
+    //    if (serviceTOAddAtProtoEnums.Contains(ServiceTOAddAtProtoEnum.DELETE))
+    //    {
+    //        serviceBuilder.AppendLine(string.Format("  rpc Create{0} (Delete{0}Request) returns (bool);", rootClass.Name));
+    //    }
+    //    serviceBuilder.AppendLine("}\n");
 
-        if (serviceTOAddAtProtoEnums.Contains(ServiceTOAddAtProtoEnum.GET))
-        {
-            serviceBuilder.AppendLine(string.Format("message Get{0}Request {{", rootClass.Name));
-            serviceBuilder.AppendLine("  int32 id = 1;");
-            serviceBuilder.AppendLine("}\n");
-        }
+    //    if (serviceTOAddAtProtoEnums.Contains(ServiceTOAddAtProtoEnum.GET))
+    //    {
+    //        serviceBuilder.AppendLine(string.Format("message Get{0}Request {{", rootClass.Name));
+    //        serviceBuilder.AppendLine("  int32 id = 1;");
+    //        serviceBuilder.AppendLine("}\n");
+    //    }
 
-        if (serviceTOAddAtProtoEnums.Contains(ServiceTOAddAtProtoEnum.SET))
-        {
-            serviceBuilder.AppendLine(string.Format("message Create{0}Request {{", rootClass.Name));
-            int fieldIndex = 1;
-            foreach (var property in rootClass.Properties)
-            {
-                serviceBuilder.AppendLine(string.Format("  {0} {1} = {2};", ConvertToProtoType(property.Type, new List<ClassNode>()), property.Name.ToLower(), fieldIndex++));
-            }
-            serviceBuilder.AppendLine("}\n");
-        }
+    //    if (serviceTOAddAtProtoEnums.Contains(ServiceTOAddAtProtoEnum.SET))
+    //    {
+    //        serviceBuilder.AppendLine(string.Format("message Create{0}Request {{", rootClass.Name));
+    //        int fieldIndex = 1;
+    //        foreach (var property in rootClass.Properties)
+    //        {
+    //            serviceBuilder.AppendLine(string.Format("  {0} {1} = {2};", ConvertToProtoType(property.Type, new List<ClassNode>()), property.Name.ToLower(), fieldIndex++));
+    //        }
+    //        serviceBuilder.AppendLine("}\n");
+    //    }
 
-        if (serviceTOAddAtProtoEnums.Contains(ServiceTOAddAtProtoEnum.UPDATE))
-        {
-            serviceBuilder.AppendLine(string.Format("message Update{0}Request {{", rootClass.Name));
-            int fieldIndex = 1;
-            foreach (var property in rootClass.Properties)
-            {
-                serviceBuilder.AppendLine(string.Format("  {0} {1} = {2};", ConvertToProtoType(property.Type, new List<ClassNode>()), property.Name.ToLower(), fieldIndex++));
-            }
-            serviceBuilder.AppendLine("}\n");
-        }
+    //    if (serviceTOAddAtProtoEnums.Contains(ServiceTOAddAtProtoEnum.UPDATE))
+    //    {
+    //        serviceBuilder.AppendLine(string.Format("message Update{0}Request {{", rootClass.Name));
+    //        int fieldIndex = 1;
+    //        foreach (var property in rootClass.Properties)
+    //        {
+    //            serviceBuilder.AppendLine(string.Format("  {0} {1} = {2};", ConvertToProtoType(property.Type, new List<ClassNode>()), property.Name.ToLower(), fieldIndex++));
+    //        }
+    //        serviceBuilder.AppendLine("}\n");
+    //    }
 
-        if (serviceTOAddAtProtoEnums.Contains(ServiceTOAddAtProtoEnum.DELETE))
-        {
-            serviceBuilder.AppendLine(string.Format("message Delete{0}Request {{", rootClass.Name));
-            serviceBuilder.AppendLine("  int32 id = 1;");
-            serviceBuilder.AppendLine("}\n");
-        }
+    //    if (serviceTOAddAtProtoEnums.Contains(ServiceTOAddAtProtoEnum.DELETE))
+    //    {
+    //        serviceBuilder.AppendLine(string.Format("message Delete{0}Request {{", rootClass.Name));
+    //        serviceBuilder.AppendLine("  int32 id = 1;");
+    //        serviceBuilder.AppendLine("}\n");
+    //    }
 
 
 
-        return serviceBuilder.ToString();
-    }
+    //    return serviceBuilder.ToString();
+    //}
 
     private string ConvertToProtoType(string csharpType, IEnumerable<ClassNode> classNodes)
     {

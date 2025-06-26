@@ -1,13 +1,13 @@
-﻿using System;
-using System.ComponentModel.Design;
-using System.IO;
-using System.Linq;
-using System.Windows.Forms;
-using CSharpConvertToProto.Windows;
+﻿using CSharpConvertToProto.Windows;
 using EnvDTE;
 using EnvDTE80;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
+using System;
+using System.ComponentModel.Design;
+using System.IO;
+using System.Linq;
+using System.Windows.Forms;
 using Task = System.Threading.Tasks.Task;
 
 namespace CSharpConvertToProto
@@ -58,50 +58,33 @@ namespace CSharpConvertToProto
             CSharpClassParser parser = new CSharpClassParser();
             var classMap = parser.ParseFolder(selectedFolder);
 
-            var selectionWindow = new ClassSelectionWindow(classMap.Keys.ToList());
-            if (selectionWindow.ShowDialog() == true)
+            ProtoGenerator generator = new ProtoGenerator();
+
+            SpecifyNamespaceWindow specifyNamespaceWindow = new SpecifyNamespaceWindow();
+            if (specifyNamespaceWindow.ShowDialog() == true)
             {
-                string selectedClass = selectionWindow.SelectedClass;
-                if (!string.IsNullOrEmpty(selectedClass))
+                var nameSpace = specifyNamespaceWindow.NameSpaceInput;
+                if (string.IsNullOrEmpty(nameSpace))
                 {
-                    ProtoGenerator generator = new ProtoGenerator();
-                    classMap.TryGetValue(selectedClass, out var classNode);
+                    nameSpace = "Generated";
+                }
 
-                    ServicesSelectorWindow servicesSelectorWindow = new ServicesSelectorWindow();
-                    if (servicesSelectorWindow.ShowDialog() == true)
+                string protoContent = generator.GenerateProto(classMap.Values.ToList(), nameSpace);
+
+                using (var dialog = new FolderBrowserDialog())
+                {
+                    dialog.SelectedPath = selectedFolder;
+                    DialogResult result = dialog.ShowDialog();
+                    if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(dialog.SelectedPath))
                     {
-                        var serviceTOAddAtProtoEnums = servicesSelectorWindow.SelectItems;
-                        if (serviceTOAddAtProtoEnums.Any())
-                        {
-                            SpecifyNamespaceWindow specifyNamespaceWindow = new SpecifyNamespaceWindow();
-                            if (specifyNamespaceWindow.ShowDialog() == true)
-                            {
-                                var nameSpace = specifyNamespaceWindow.NameSpaceInput;
-                                if (string.IsNullOrEmpty(nameSpace))
-                                {
-                                    nameSpace = "Generated";
-                                }
+                        string protoPath = Path.Combine(dialog.SelectedPath, $"GeneratedProtoModels.proto");
+                        File.WriteAllText(protoPath, protoContent);
 
-                                string protoContent = generator.GenerateProto(classMap.Values.ToList(), selectedClass, serviceTOAddAtProtoEnums, nameSpace);
+                        AddFileToSolution(dte, protoPath);
 
-                                using (var dialog = new FolderBrowserDialog())
-                                {
-                                    dialog.SelectedPath = selectedFolder;
-                                    DialogResult result = dialog.ShowDialog();
-                                    if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(dialog.SelectedPath))
-                                    {
-                                        string protoPath = Path.Combine(dialog.SelectedPath, $"{selectedClass}.proto");
-                                        File.WriteAllText(protoPath, protoContent);
-
-                                        AddFileToSolution(dte, protoPath);
-
-                                        VsShellUtilities.ShowMessageBox(
-                                            this.package, $"File proto generato: {protoPath}", "ConvertToProtoCommand",
-                                            OLEMSGICON.OLEMSGICON_INFO, OLEMSGBUTTON.OLEMSGBUTTON_OK, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
-                                    }
-                                }
-                            }
-                        }
+                        VsShellUtilities.ShowMessageBox(
+                            this.package, $"File proto generato: {protoPath}", "ConvertToProtoCommand",
+                            OLEMSGICON.OLEMSGICON_INFO, OLEMSGBUTTON.OLEMSGBUTTON_OK, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
                     }
                 }
             }
