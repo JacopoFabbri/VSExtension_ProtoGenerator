@@ -29,6 +29,11 @@ public class ProtoGenerator
         foreach (var classNode in classNodes)
         {
             classNode.Name = classNode.Name.Contains("Infra") ? classNode.Name.Replace("Infra", "Grpc") : classNode.Name;
+
+            foreach (var property in classNode.Properties)
+            {
+                property.Type = property.Type.Contains("Infra") ? property.Type.Replace("Infra", "Grpc") : property.Type;
+            }
         }
 
         foreach (var enumNode in classNodes.Where(node => node.IsEnum))
