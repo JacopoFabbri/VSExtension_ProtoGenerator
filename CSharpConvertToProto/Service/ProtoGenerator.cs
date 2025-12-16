@@ -182,6 +182,7 @@ public class ProtoGenerator
             case "string": return "google.protobuf.StringValue";
             case "decimal": return "double";
             case "DateTime": return "google.protobuf.Timestamp";
+            case "T": return "google.protobuf.Any";
             default: return classNodes.Any(node => node.Name == baseType) ? baseType : "string";
         }
     }
