@@ -194,6 +194,11 @@ public class ProtoGenerator
             throw new ArgumentException("Il tipo fornito è nullo o vuoto.");
         }
 
+        if (type.Contains("?"))
+        {
+            type = type.Replace("?", "");
+        }
+
         int start = type.IndexOf('<');
         int end = type.LastIndexOf('>');
 
