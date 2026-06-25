@@ -62,6 +62,21 @@
 					<ButtonText>CSharpConvertToProto</ButtonText>
 				</Strings>
 			</Button>
+
+			<Button guid="guidCSharpConvertToProtoPackageCmdSet" id="SettingsCommandId" priority="0x0110" type="Button">
+				<Parent guid="guidCSharpConvertToProtoPackageCmdSet" id="MyMenuGroup" />
+				<Strings>
+					<ButtonText>Extension Settings</ButtonText>
+				</Strings>
+			</Button>
+
+			<!-- Also expose settings under Tools menu -->
+			<Button guid="guidCSharpConvertToProtoPackageCmdSet" id="SettingsCommandId" priority="0x0200" type="Button">
+				<Parent guid="guidSHLMainMenu" id="IDM_VS_MENU_TOOLS" />
+				<Strings>
+					<ButtonText>Extension Settings</ButtonText>
+				</Strings>
+			</Button>
 		</Buttons>
 
 		<!--The bitmaps section is used to define the bitmaps that are used for the commands.-->
@@ -83,6 +98,7 @@
 		<GuidSymbol name="guidCSharpConvertToProtoPackageCmdSet" value="{48e4d2bf-8218-4446-92b0-2e21cd5e5113}">
 			<IDSymbol name="MyMenuGroup" value="0x1020" />
 			<IDSymbol name="ConvertToProtoCommandId" value="0x0100" />
+			<IDSymbol name="SettingsCommandId" value="0x0101" />
 		</GuidSymbol>
 
 		<GuidSymbol name="guidImages" value="{060dd21e-dce4-4a24-be55-487d1c39d1f7}" >

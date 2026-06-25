@@ -1,0 +1,28 @@
+<Window x:Class="CSharpConvertToProto.Windows.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Extension Settings" Height="260" Width="420">
+    <Grid>
+        <StackPanel Margin="12">
+            <Label Content="Source folder (models for generation)"/>
+            <StackPanel Orientation="Horizontal">
+                <TextBox x:Name="SourceFolderText" Width="300" />
+                <Button Content="..." Width="30" Margin="6,0,0,0" Click="BrowseSource_Click"/>
+            </StackPanel>
+
+            <Label Content="Output folder (proto generated)" Margin="8,8,0,0"/>
+            <StackPanel Orientation="Horizontal">
+                <TextBox x:Name="OutputFolderText" Width="300" />
+                <Button Content="..." Width="30" Margin="6,0,0,0" Click="BrowseOutput_Click"/>
+            </StackPanel>
+
+            <Label Content="Namespace for proto" Margin="0,8,0,0"/>
+            <TextBox x:Name="NamespaceText" Width="340"/>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+                <Button Content="Cancel" Width="90" Click="Cancel_Click"/>
+                <Button Content="Save" Width="90" Margin="8,0,0,0" Click="Save_Click"/>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>

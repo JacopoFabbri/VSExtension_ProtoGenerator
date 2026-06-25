@@ -45,6 +45,11 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Models\Settings.cs" />
+    <Compile Include="Service\FileWatcherService.cs" />
+    <Compile Include="Service\SettingsStore.cs" />
+    <Compile Include="Service\SolutionFolderWatcher.cs" />
+    <Compile Include="SettingsCommand.cs" />
     <Compile Include="Windows\ClassSelectionWindow.xaml.cs">
       <DependentUpon>ClassSelectionWindow.xaml</DependentUpon>
     </Compile>
@@ -58,6 +63,9 @@
     <Compile Include="Service\ProtoGenerator.cs" />
     <Compile Include="Windows\ServicesSelectorWindow.xaml.cs">
       <DependentUpon>ServicesSelectorWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Windows\SettingsWindow.xaml.cs">
+      <DependentUpon>SettingsWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Windows\SpecifyNamespaceWindow.xaml.cs">
       <DependentUpon>SpecifyNamespaceWindow.xaml</DependentUpon>
@@ -109,6 +117,9 @@
     </Page>
     <Page Include="Windows\ServicesSelectorWindow.xaml">
       <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Windows\SettingsWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Windows\SpecifyNamespaceWindow.xaml">
