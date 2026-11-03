@@ -90,8 +90,8 @@ namespace CSharpConvertToProto.Windows
             CurrentSettings.NameSpace = string.IsNullOrWhiteSpace(NamespaceText.Text) ? "Generated" : NamespaceText.Text;
             CurrentSettings.ReplaceClassTextFrom = string.IsNullOrWhiteSpace(ReplaceFromText.Text) ? "infra" : ReplaceFromText.Text;
             CurrentSettings.ReplaceClassTextTo = string.IsNullOrWhiteSpace(ReplaceToText.Text) ? "grpc" : ReplaceToText.Text;
-            var projectGuid = SettingsStore.ResolveProjectGuid(_dte);
-            SettingsStore.Save(CurrentSettings, projectGuid);
+            var solutionNameKey = SettingsStore.ResolveSolutionNameKey(_dte);
+            SettingsStore.Save(CurrentSettings, solutionNameKey);
             this.DialogResult = true;
             this.Close();
         }

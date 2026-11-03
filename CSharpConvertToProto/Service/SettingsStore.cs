@@ -2,10 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Xml.Linq;
 using System.Xml.Serialization;
 using CSharpConvertToProto.Models;
-using EnvDTE;
 using EnvDTE80;
 
 namespace CSharpConvertToProto.Service
@@ -21,34 +19,14 @@ namespace CSharpConvertToProto.Service
             return Path.Combine(folder, "settings.shared.xml");
         }
 
-        public static string ResolveProjectGuid(DTE2 dte)
+        public static string ResolveSolutionNameKey(DTE2 dte)
         {
             try
             {
-                var selected = (dte?.ToolWindows?.SolutionExplorer?.SelectedItems as object[])?.FirstOrDefault() as UIHierarchyItem;
-                if (selected?.Object is Project selectedProject)
+                var fullName = dte?.Solution?.FullName;
+                if (!string.IsNullOrWhiteSpace(fullName))
                 {
-                    var guid = TryGetProjectGuid(selectedProject);
-                    if (!string.IsNullOrWhiteSpace(guid)) return guid;
-                }
-
-                if (selected?.Object is ProjectItem selectedItem && selectedItem.ContainingProject != null)
-                {
-                    var guid = TryGetProjectGuid(selectedItem.ContainingProject);
-                    if (!string.IsNullOrWhiteSpace(guid)) return guid;
-                }
-
-                if (dte?.ActiveSolutionProjects is Array activeProjects && activeProjects.Length > 0)
-                {
-                    var activeProject = activeProjects.GetValue(0) as Project;
-                    var guid = TryGetProjectGuid(activeProject);
-                    if (!string.IsNullOrWhiteSpace(guid)) return guid;
-                }
-
-                foreach (Project project in dte?.Solution?.Projects)
-                {
-                    var guid = TryGetProjectGuid(project);
-                    if (!string.IsNullOrWhiteSpace(guid)) return guid;
+                    return NormalizeSolutionName(Path.GetFileNameWithoutExtension(fullName));
                 }
             }
             catch { }
@@ -56,56 +34,24 @@ namespace CSharpConvertToProto.Service
             return "default";
         }
 
-        private static string TryGetProjectGuid(Project project)
+        private static string NormalizeSolutionName(string value)
         {
-            try
-            {
-                if (project == null) return null;
-
-                try
-                {
-                    var value = project.Properties?.Item("ProjectGuid")?.Value as string;
-                    var normalized = NormalizeGuid(value);
-                    if (!string.IsNullOrWhiteSpace(normalized)) return normalized;
-                }
-                catch { }
-
-                if (!string.IsNullOrWhiteSpace(project.FullName) && File.Exists(project.FullName))
-                {
-                    var doc = XDocument.Load(project.FullName);
-                    var projectGuid = doc.Descendants().FirstOrDefault(x => x.Name.LocalName == "ProjectGuid")?.Value;
-                    var normalized = NormalizeGuid(projectGuid);
-                    if (!string.IsNullOrWhiteSpace(normalized)) return normalized;
-                }
-            }
-            catch { }
-
-            return null;
-        }
-
-        private static string NormalizeGuid(string value)
-        {
-            if (string.IsNullOrWhiteSpace(value)) return null;
-            if (Guid.TryParse(value, out var guid))
-            {
-                return guid.ToString("D").ToUpperInvariant();
-            }
-
+            if (string.IsNullOrWhiteSpace(value)) return "default";
             return value.Trim().ToUpperInvariant();
         }
 
-        public static void Save(Settings settings, string projectGuid)
+        public static void Save(Settings settings, string solutionNameKey)
         {
             var path = GetSettingsPath();
             try
             {
                 var store = LoadStore(path);
-                var key = string.IsNullOrWhiteSpace(projectGuid) ? "default" : NormalizeGuid(projectGuid);
-                var existing = store.Entries.FirstOrDefault(e => string.Equals(e.ProjectGuid, key, StringComparison.OrdinalIgnoreCase));
+                var key = NormalizeSolutionName(solutionNameKey);
+                var existing = store.Entries.FirstOrDefault(e => string.Equals(e.SolutionName, key, StringComparison.OrdinalIgnoreCase));
 
                 if (existing == null)
                 {
-                    existing = new SettingsEntry { ProjectGuid = key, Conf = settings ?? new Settings() };
+                    existing = new SettingsEntry { SolutionName = key, Conf = settings ?? new Settings() };
                     store.Entries.Add(existing);
                 }
                 else
@@ -128,13 +74,21 @@ namespace CSharpConvertToProto.Service
             catch { }
         }
 
-        public static Settings Load(string projectGuid)
+        public static Settings Load(string solutionNameKey)
         {
             var path = GetSettingsPath();
             try
             {
                 var store = LoadStore(path);
-                var key = string.IsNullOrWhiteSpace(projectGuid) ? "default" : NormalizeGuid(projectGuid);
+                var key = NormalizeSolutionName(solutionNameKey);
+
+                var bySolutionName = store.Entries.FirstOrDefault(e => string.Equals(e.SolutionName, key, StringComparison.OrdinalIgnoreCase))?.Conf;
+                if (bySolutionName != null)
+                {
+                    return bySolutionName;
+                }
+
+                // backward compatibility with previous key name in persisted XML
                 return store.Entries.FirstOrDefault(e => string.Equals(e.ProjectGuid, key, StringComparison.OrdinalIgnoreCase))?.Conf;
             }
             catch
@@ -173,6 +127,7 @@ namespace CSharpConvertToProto.Service
         [Serializable]
         public class SettingsEntry
         {
+            public string SolutionName { get; set; }
             public string ProjectGuid { get; set; }
             public Settings Conf { get; set; } = new Settings();
         }

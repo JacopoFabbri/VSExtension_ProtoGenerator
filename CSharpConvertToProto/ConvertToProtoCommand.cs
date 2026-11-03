@@ -41,8 +41,8 @@ namespace CSharpConvertToProto
             ThreadHelper.ThrowIfNotOnUIThread();
             var serviceProvider = this.package as IServiceProvider;
             var dte = serviceProvider?.GetService(typeof(EnvDTE.DTE)) as DTE2;
-            var projectGuid = Service.SettingsStore.ResolveProjectGuid(dte);
-            var settings = Service.SettingsStore.Load(projectGuid) ?? new Models.Settings();
+            var solutionNameKey = Service.SettingsStore.ResolveSolutionNameKey(dte);
+            var settings = Service.SettingsStore.Load(solutionNameKey) ?? new Models.Settings();
             var window = new SettingsWindow(settings, dte);
             var result = window.ShowDialog();
             if (result == true)
