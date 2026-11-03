@@ -32,21 +32,19 @@ namespace CSharpConvertToProto.Windows
 
             if (string.IsNullOrWhiteSpace(CurrentSettings.SourceFolder))
             {
-                CurrentSettings.SourceFolder = !string.IsNullOrEmpty(solutionFolder)
-                    ? Path.Combine(solutionFolder, "ModelsForGeneration")
-                    : string.Empty;
+                CurrentSettings.SourceFolder = !string.IsNullOrEmpty(solutionFolder) ? solutionFolder : string.Empty;
             }
 
             if (string.IsNullOrWhiteSpace(CurrentSettings.OutputFolder))
             {
-                CurrentSettings.OutputFolder = !string.IsNullOrEmpty(solutionFolder)
-                    ? Path.Combine(solutionFolder, "ProtoGenerated")
-                    : string.Empty;
+                CurrentSettings.OutputFolder = !string.IsNullOrEmpty(solutionFolder) ? solutionFolder : string.Empty;
             }
 
             SourceFolderText.Text = CurrentSettings.SourceFolder ?? string.Empty;
             OutputFolderText.Text = CurrentSettings.OutputFolder ?? string.Empty;
             NamespaceText.Text = CurrentSettings.NameSpace ?? "Generated";
+            ReplaceFromText.Text = string.IsNullOrWhiteSpace(CurrentSettings.ReplaceClassTextFrom) ? "infra" : CurrentSettings.ReplaceClassTextFrom;
+            ReplaceToText.Text = string.IsNullOrWhiteSpace(CurrentSettings.ReplaceClassTextTo) ? "grpc" : CurrentSettings.ReplaceClassTextTo;
         }
 
         private void ProjectCombo_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
@@ -90,7 +88,10 @@ namespace CSharpConvertToProto.Windows
             CurrentSettings.SourceFolder = SourceFolderText.Text;
             CurrentSettings.OutputFolder = OutputFolderText.Text;
             CurrentSettings.NameSpace = string.IsNullOrWhiteSpace(NamespaceText.Text) ? "Generated" : NamespaceText.Text;
-            SettingsStore.Save(CurrentSettings);
+            CurrentSettings.ReplaceClassTextFrom = string.IsNullOrWhiteSpace(ReplaceFromText.Text) ? "infra" : ReplaceFromText.Text;
+            CurrentSettings.ReplaceClassTextTo = string.IsNullOrWhiteSpace(ReplaceToText.Text) ? "grpc" : ReplaceToText.Text;
+            var projectGuid = SettingsStore.ResolveProjectGuid(_dte);
+            SettingsStore.Save(CurrentSettings, projectGuid);
             this.DialogResult = true;
             this.Close();
         }

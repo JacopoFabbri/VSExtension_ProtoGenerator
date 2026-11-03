@@ -152,25 +152,19 @@ namespace CSharpConvertToProto.Service
 
                             ShowStatus("Adding generated .proto to project...");
 
-                            // If the file is already part of the Generated folder or project, remove it first so it will be added fresh
-                            try
+                            // Add file inside Generated folder only if not already present
+                            ProjectItem existing = null;
+                            try { existing = FindProjectItemByPath(containingProject, filePath); } catch { }
+                            if (existing == null)
                             {
-                                ProjectItem existing = FindProjectItemByPath(containingProject, filePath);
-                                if (existing != null)
+                                if (generatedFolder != null)
                                 {
-                                    existing.Delete();
+                                    generatedFolder.ProjectItems.AddFromFile(filePath);
                                 }
-                            }
-                            catch { }
-
-                            // Add file inside Generated folder
-                            if (generatedFolder != null)
-                            {
-                                generatedFolder.ProjectItems.AddFromFile(filePath);
-                            }
-                            else
-                            {
-                                containingProject.ProjectItems.AddFromFile(filePath);
+                                else
+                                {
+                                    containingProject.ProjectItems.AddFromFile(filePath);
+                                }
                             }
 
                             ShowStatus("Generated .proto added to project.");
