@@ -1,17 +1,17 @@
 <Window x:Class="CSharpConvertToProto.Windows.SettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Extension Settings" Height="350" Width="420">
+        Title="Extension Settings" Height="360" Width="420" ResizeMode="NoResize">
     <Grid>
         <StackPanel Margin="12">
             <Label Content="Source folder (models for generation)"/>
-            <StackPanel Orientation="Horizontal">
+            <StackPanel Orientation="Horizontal" Width="340">
                 <TextBox x:Name="SourceFolderText" Width="300" />
                 <Button Content="..." Width="30" Margin="6,0,0,0" Click="BrowseSource_Click"/>
             </StackPanel>
 
-            <Label Content="Output folder (proto generated)" Margin="8,8,0,0"/>
-            <StackPanel Orientation="Horizontal">
+            <Label Content="Output folder (proto generated)" Margin="0,8,0,0"/>
+            <StackPanel Orientation="Horizontal" Width="340">
                 <TextBox x:Name="OutputFolderText" Width="300" />
                 <Button Content="..." Width="30" Margin="6,0,0,0" Click="BrowseOutput_Click"/>
             </StackPanel>
