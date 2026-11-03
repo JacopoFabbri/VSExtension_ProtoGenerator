@@ -1,13 +1,9 @@
 ﻿using CSharpConvertToProto.Windows;
-using EnvDTE;
 using EnvDTE80;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using System;
 using System.ComponentModel.Design;
-using System.IO;
-using System.Linq;
-using System.Windows.Forms;
 using Task = System.Threading.Tasks.Task;
 
 namespace CSharpConvertToProto
@@ -44,80 +40,20 @@ namespace CSharpConvertToProto
         {
             ThreadHelper.ThrowIfNotOnUIThread();
             var serviceProvider = this.package as IServiceProvider;
-            var dte = serviceProvider?.GetService(typeof(DTE)) as DTE2;
-            string selectedFolder = GetSelectedFolder(dte);
-
-            if (string.IsNullOrEmpty(selectedFolder))
+            var dte = serviceProvider?.GetService(typeof(EnvDTE.DTE)) as DTE2;
+            var projectGuid = Service.SettingsStore.ResolveProjectGuid(dte);
+            var settings = Service.SettingsStore.Load(projectGuid) ?? new Models.Settings();
+            var window = new SettingsWindow(settings, dte);
+            var result = window.ShowDialog();
+            if (result == true)
             {
                 VsShellUtilities.ShowMessageBox(
-                    this.package, "Seleziona una cartella valida all'interno della soluzione.", "ConvertToProtoCommand",
-                    OLEMSGICON.OLEMSGICON_WARNING, OLEMSGBUTTON.OLEMSGBUTTON_OK, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
-                return;
-            }
-
-            CSharpClassParser parser = new CSharpClassParser();
-            var classMap = parser.ParseFolder(selectedFolder);
-
-            ProtoGenerator generator = new ProtoGenerator();
-
-            SpecifyNamespaceWindow specifyNamespaceWindow = new SpecifyNamespaceWindow();
-            if (specifyNamespaceWindow.ShowDialog() == true)
-            {
-                var nameSpace = specifyNamespaceWindow.NameSpaceInput;
-                if (string.IsNullOrEmpty(nameSpace))
-                {
-                    nameSpace = "Generated";
-                }
-
-                string protoContent = generator.GenerateProto(classMap.Values.ToList(), nameSpace);
-
-                using (var dialog = new FolderBrowserDialog())
-                {
-                    dialog.SelectedPath = selectedFolder;
-                    DialogResult result = dialog.ShowDialog();
-                    if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(dialog.SelectedPath))
-                    {
-                        string protoPath = Path.Combine(dialog.SelectedPath, $"GeneratedProtoModels.proto");
-                        File.WriteAllText(protoPath, protoContent);
-
-                        AddFileToSolution(dte, protoPath);
-
-                        VsShellUtilities.ShowMessageBox(
-                            this.package, $"File proto generato: {protoPath}", "ConvertToProtoCommand",
-                            OLEMSGICON.OLEMSGICON_INFO, OLEMSGBUTTON.OLEMSGBUTTON_OK, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
-                    }
-                }
-            }
-        }
-
-        private string GetSelectedFolder(DTE2 dte)
-        {
-            ThreadHelper.ThrowIfNotOnUIThread();
-            UIHierarchyItem selectedItem = (dte.ToolWindows.SolutionExplorer.SelectedItems as object[])?.FirstOrDefault() as UIHierarchyItem;
-            if (selectedItem?.Object is ProjectItem projectItem && projectItem.Kind == EnvDTE.Constants.vsProjectItemKindPhysicalFolder)
-            {
-                return projectItem.FileNames[1];
-            }
-            return null;
-        }
-
-        private void AddFileToSolution(DTE2 dte, string filePath)
-        {
-            ThreadHelper.ThrowIfNotOnUIThread();
-            if (dte.Solution != null && dte.Solution.IsOpen)
-            {
-                EnvDTE.Project activeProject = dte.ActiveSolutionProjects is Array activeProjects && activeProjects.Length > 0
-                    ? activeProjects.GetValue(0) as EnvDTE.Project
-                    : null;
-
-                if (activeProject != null)
-                {
-                    activeProject.ProjectItems.AddFromFile(filePath);
-                }
-                else
-                {
-                    dte.Solution.AddFromFile(filePath);
-                }
+                    this.package,
+                    "Configurazione salvata. Il monitoraggio in background è stato aggiornato.",
+                    "ConvertToProtoCommand",
+                    OLEMSGICON.OLEMSGICON_INFO,
+                    OLEMSGBUTTON.OLEMSGBUTTON_OK,
+                    OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
             }
         }
     }

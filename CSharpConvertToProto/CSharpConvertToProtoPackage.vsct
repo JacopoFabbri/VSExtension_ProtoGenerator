@@ -40,6 +40,12 @@
 		<!--<Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_PROJNODE"/>-->
 		<Groups>
 			<Group guid="guidCSharpConvertToProtoPackageCmdSet" id="MyMenuGroup" priority="0x0600">
+				<Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_SOLNNODE"/>
+			</Group>
+			<Group guid="guidCSharpConvertToProtoPackageCmdSet" id="MyProjectMenuGroup" priority="0x0600">
+				<Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_PROJNODE"/>
+			</Group>
+			<Group guid="guidCSharpConvertToProtoPackageCmdSet" id="MyFolderMenuGroup" priority="0x0600">
 				<Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_FOLDERNODE"/>
 			</Group>
 		</Groups>
@@ -59,7 +65,29 @@
 				<Parent guid="guidCSharpConvertToProtoPackageCmdSet" id="MyMenuGroup" />
 				<Icon guid="guidImages" id="bmpPic1" />
 				<Strings>
-					<ButtonText>CSharpConvertToProto</ButtonText>
+					<ButtonText>Configure Proto Sync</ButtonText>
+				</Strings>
+			</Button>
+
+			<Button guid="guidCSharpConvertToProtoPackageCmdSet" id="StartWatcherCommandId" priority="0x0110" type="Button">
+				<Parent guid="guidCSharpConvertToProtoPackageCmdSet" id="MyMenuGroup" />
+				<Strings>
+					<ButtonText>Start Proto Sync</ButtonText>
+				</Strings>
+			</Button>
+
+			<Button guid="guidCSharpConvertToProtoPackageCmdSet" id="StopWatcherCommandId" priority="0x0120" type="Button">
+				<Parent guid="guidCSharpConvertToProtoPackageCmdSet" id="MyMenuGroup" />
+				<Strings>
+					<ButtonText>Stop Proto Sync</ButtonText>
+				</Strings>
+			</Button>
+
+			<!-- Also expose settings under Tools menu -->
+			<Button guid="guidCSharpConvertToProtoPackageCmdSet" id="SettingsCommandId" priority="0x0200" type="Button">
+				<Parent guid="guidSHLMainMenu" id="IDM_VS_MENU_TOOLS" />
+				<Strings>
+					<ButtonText>Extension Settings</ButtonText>
 				</Strings>
 			</Button>
 		</Buttons>
@@ -75,6 +103,27 @@
 		</Bitmaps>
 	</Commands>
 
+	<CommandPlacements>
+		<CommandPlacement guid="guidCSharpConvertToProtoPackageCmdSet" id="ConvertToProtoCommandId" priority="0x0100">
+			<Parent guid="guidCSharpConvertToProtoPackageCmdSet" id="MyProjectMenuGroup"/>
+		</CommandPlacement>
+		<CommandPlacement guid="guidCSharpConvertToProtoPackageCmdSet" id="ConvertToProtoCommandId" priority="0x0100">
+			<Parent guid="guidCSharpConvertToProtoPackageCmdSet" id="MyFolderMenuGroup"/>
+		</CommandPlacement>
+		<CommandPlacement guid="guidCSharpConvertToProtoPackageCmdSet" id="StartWatcherCommandId" priority="0x0110">
+			<Parent guid="guidCSharpConvertToProtoPackageCmdSet" id="MyProjectMenuGroup"/>
+		</CommandPlacement>
+		<CommandPlacement guid="guidCSharpConvertToProtoPackageCmdSet" id="StartWatcherCommandId" priority="0x0110">
+			<Parent guid="guidCSharpConvertToProtoPackageCmdSet" id="MyFolderMenuGroup"/>
+		</CommandPlacement>
+		<CommandPlacement guid="guidCSharpConvertToProtoPackageCmdSet" id="StopWatcherCommandId" priority="0x0120">
+			<Parent guid="guidCSharpConvertToProtoPackageCmdSet" id="MyProjectMenuGroup"/>
+		</CommandPlacement>
+		<CommandPlacement guid="guidCSharpConvertToProtoPackageCmdSet" id="StopWatcherCommandId" priority="0x0120">
+			<Parent guid="guidCSharpConvertToProtoPackageCmdSet" id="MyFolderMenuGroup"/>
+		</CommandPlacement>
+	</CommandPlacements>
+
 	<Symbols>
 		<!-- This is the package guid. -->
 		<GuidSymbol name="guidCSharpConvertToProtoPackage" value="{5074d942-c26e-400b-b76e-453e472d4d64}" />
@@ -82,7 +131,12 @@
 		<!-- This is the guid used to group the menu commands together -->
 		<GuidSymbol name="guidCSharpConvertToProtoPackageCmdSet" value="{48e4d2bf-8218-4446-92b0-2e21cd5e5113}">
 			<IDSymbol name="MyMenuGroup" value="0x1020" />
+			<IDSymbol name="MyProjectMenuGroup" value="0x1021" />
+			<IDSymbol name="MyFolderMenuGroup" value="0x1022" />
 			<IDSymbol name="ConvertToProtoCommandId" value="0x0100" />
+			<IDSymbol name="SettingsCommandId" value="0x0101" />
+			<IDSymbol name="StartWatcherCommandId" value="0x0102" />
+			<IDSymbol name="StopWatcherCommandId" value="0x0103" />
 		</GuidSymbol>
 
 		<GuidSymbol name="guidImages" value="{060dd21e-dce4-4a24-be55-487d1c39d1f7}" >

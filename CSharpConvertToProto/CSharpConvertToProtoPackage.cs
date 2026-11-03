@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Threading;
+using EnvDTE80;
 using Microsoft.VisualStudio.Shell;
 using Task = System.Threading.Tasks.Task;
 
@@ -33,6 +34,9 @@ namespace CSharpConvertToProto
         /// </summary>
         public const string PackageGuidString = "5074d942-c26e-400b-b76e-453e472d4d64";
 
+        private Service.FileWatcherService _currentWatcher;
+        private bool _watcherEnabled = true;
+
         #region Package Members
 
         /// <summary>
@@ -53,6 +57,80 @@ namespace CSharpConvertToProto
             // Do any initialization that requires the UI thread after switching to the UI thread.
             await this.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
             await ConvertToProtoCommand.InitializeAsync(this);
+            await SettingsCommand.InitializeAsync(this);
+            await StartWatcherCommand.InitializeAsync(this);
+            await StopWatcherCommand.InitializeAsync(this);
+
+            var dte = await GetServiceAsync(typeof(EnvDTE.DTE)) as DTE2;
+            var projectGuid = Service.SettingsStore.ResolveProjectGuid(dte);
+            var settings = Service.SettingsStore.Load(projectGuid);
+
+            Service.SettingsStore.SettingsChanged += (s) =>
+            {
+                _ = this.JoinableTaskFactory.RunAsync(async () => await OnSettingsChangedAsync(s));
+            };
+
+            if (settings == null)
+            {
+                try
+                {
+                    var settingsWindow = new Windows.SettingsWindow(null, dte);
+                    var res = settingsWindow.ShowDialog();
+                    if (res == true)
+                    {
+                        settings = Service.SettingsStore.Load(projectGuid);
+                    }
+                }
+                catch { }
+            }
+
+            await OnSettingsChangedAsync(settings);
+        }
+
+        internal async Task StartWatcherFromSavedSettingsAsync()
+        {
+            await this.JoinableTaskFactory.SwitchToMainThreadAsync(this.DisposalToken);
+
+            _watcherEnabled = true;
+            var dte = await GetServiceAsync(typeof(EnvDTE.DTE)) as DTE2;
+            var projectGuid = Service.SettingsStore.ResolveProjectGuid(dte);
+            var settings = Service.SettingsStore.Load(projectGuid);
+            await OnSettingsChangedAsync(settings);
+        }
+
+        internal async Task StopWatcherAsync()
+        {
+            await this.JoinableTaskFactory.SwitchToMainThreadAsync(this.DisposalToken);
+            _watcherEnabled = false;
+            try { _currentWatcher?.Stop(); _currentWatcher = null; } catch { }
+        }
+
+        private async Task OnSettingsChangedAsync(CSharpConvertToProto.Models.Settings newSettings)
+        {
+            try
+            {
+                await this.JoinableTaskFactory.SwitchToMainThreadAsync(this.DisposalToken);
+                try { _currentWatcher?.Stop(); _currentWatcher = null; } catch { }
+
+                if (!_watcherEnabled)
+                {
+                    return;
+                }
+
+                if (newSettings == null || string.IsNullOrWhiteSpace(newSettings.SourceFolder) || string.IsNullOrWhiteSpace(newSettings.OutputFolder))
+                {
+                    return;
+                }
+
+                _currentWatcher = new Service.FileWatcherService(
+                    newSettings.SourceFolder,
+                    newSettings.OutputFolder,
+                    newSettings?.NameSpace ?? "Generated",
+                    newSettings?.ReplaceClassTextFrom,
+                    newSettings?.ReplaceClassTextTo);
+                _currentWatcher.Start();
+            }
+            catch { }
         }
 
         #endregion

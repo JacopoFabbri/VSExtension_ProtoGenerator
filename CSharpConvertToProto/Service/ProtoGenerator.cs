@@ -3,13 +3,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 public class ProtoGenerator
 {
     private readonly StringBuilder _pendingMessages = new StringBuilder();
     private readonly HashSet<string> _processedClasses = new HashSet<string>();
 
-    public string GenerateProto(IEnumerable<ClassNode> classNodes, string nameSpace)
+    public string GenerateProto(IEnumerable<ClassNode> classNodes, string nameSpace, string replaceClassTextFrom = "infra", string replaceClassTextTo = "grpc")
     {
         _pendingMessages.Clear();
         _processedClasses.Clear();
@@ -26,13 +27,16 @@ public class ProtoGenerator
             .Select(g => g.First())
             .ToList();
 
+        var searchText = string.IsNullOrWhiteSpace(replaceClassTextFrom) ? "infra" : replaceClassTextFrom;
+        var replacementText = string.IsNullOrWhiteSpace(replaceClassTextTo) ? "grpc" : replaceClassTextTo;
+
         foreach (var classNode in classNodes)
         {
-            classNode.Name = classNode.Name.Contains("Infra") ? classNode.Name.Replace("Infra", "Grpc") : classNode.Name;
+            classNode.Name = ReplaceIgnoreCase(classNode.Name, searchText, replacementText);
 
             foreach (var property in classNode.Properties)
             {
-                property.Type = property.Type.Contains("Infra") ? property.Type.Replace("Infra", "Grpc") : property.Type;
+                property.Type = ReplaceIgnoreCase(property.Type, searchText, replacementText);
             }
         }
 
@@ -100,77 +104,32 @@ public class ProtoGenerator
         return enumBuilder.ToString();
     }
 
-    //private string GenerateService(ClassNode rootClass, List<ServiceTOAddAtProtoEnum> serviceTOAddAtProtoEnums)
-    //{
-    //    var serviceBuilder = new StringBuilder();
-    //    serviceBuilder.AppendLine(string.Format("service {0}Service {{", rootClass.Name));
-
-    //    if (serviceTOAddAtProtoEnums.Contains(ServiceTOAddAtProtoEnum.GET))
-    //    {
-    //        serviceBuilder.AppendLine(string.Format("  rpc Get{0} (Get{0}Request) returns ({0});", rootClass.Name));
-    //    }
-    //    if (serviceTOAddAtProtoEnums.Contains(ServiceTOAddAtProtoEnum.SET))
-    //    {
-    //        serviceBuilder.AppendLine(string.Format("  rpc Create{0} (Create{0}Request) returns ({0});", rootClass.Name));
-    //    }
-    //    if (serviceTOAddAtProtoEnums.Contains(ServiceTOAddAtProtoEnum.UPDATE))
-    //    {
-    //        serviceBuilder.AppendLine(string.Format("  rpc Create{0} (Update{0}Request) returns ({0});", rootClass.Name));
-    //    }
-    //    if (serviceTOAddAtProtoEnums.Contains(ServiceTOAddAtProtoEnum.DELETE))
-    //    {
-    //        serviceBuilder.AppendLine(string.Format("  rpc Create{0} (Delete{0}Request) returns (bool);", rootClass.Name));
-    //    }
-    //    serviceBuilder.AppendLine("}\n");
-
-    //    if (serviceTOAddAtProtoEnums.Contains(ServiceTOAddAtProtoEnum.GET))
-    //    {
-    //        serviceBuilder.AppendLine(string.Format("message Get{0}Request {{", rootClass.Name));
-    //        serviceBuilder.AppendLine("  int32 id = 1;");
-    //        serviceBuilder.AppendLine("}\n");
-    //    }
-
-    //    if (serviceTOAddAtProtoEnums.Contains(ServiceTOAddAtProtoEnum.SET))
-    //    {
-    //        serviceBuilder.AppendLine(string.Format("message Create{0}Request {{", rootClass.Name));
-    //        int fieldIndex = 1;
-    //        foreach (var property in rootClass.Properties)
-    //        {
-    //            serviceBuilder.AppendLine(string.Format("  {0} {1} = {2};", ConvertToProtoType(property.Type, new List<ClassNode>()), property.Name.ToLower(), fieldIndex++));
-    //        }
-    //        serviceBuilder.AppendLine("}\n");
-    //    }
-
-    //    if (serviceTOAddAtProtoEnums.Contains(ServiceTOAddAtProtoEnum.UPDATE))
-    //    {
-    //        serviceBuilder.AppendLine(string.Format("message Update{0}Request {{", rootClass.Name));
-    //        int fieldIndex = 1;
-    //        foreach (var property in rootClass.Properties)
-    //        {
-    //            serviceBuilder.AppendLine(string.Format("  {0} {1} = {2};", ConvertToProtoType(property.Type, new List<ClassNode>()), property.Name.ToLower(), fieldIndex++));
-    //        }
-    //        serviceBuilder.AppendLine("}\n");
-    //    }
-
-    //    if (serviceTOAddAtProtoEnums.Contains(ServiceTOAddAtProtoEnum.DELETE))
-    //    {
-    //        serviceBuilder.AppendLine(string.Format("message Delete{0}Request {{", rootClass.Name));
-    //        serviceBuilder.AppendLine("  int32 id = 1;");
-    //        serviceBuilder.AppendLine("}\n");
-    //    }
-
-
-
-    //    return serviceBuilder.ToString();
-    //}
-
     private string ConvertToProtoType(string csharpType, IEnumerable<ClassNode> classNodes)
     {
+        if (string.IsNullOrWhiteSpace(csharpType))
+        {
+            return "string";
+        }
+
+        bool isNullable = IsNullableType(csharpType);
         string baseType = ExtractBaseType(csharpType);
         if (IsCollectionType(csharpType))
         {
             return "repeated " + ConvertToProtoType(baseType, classNodes);
         }
+
+        //if (isNullable)
+        //{
+        //    switch (baseType)
+        //    {
+        //        case "int": return "google.protobuf.Int32Value";
+        //        case "long": return "google.protobuf.Int64Value";
+        //        case "float": return "google.protobuf.FloatValue";
+        //        case "double": return "google.protobuf.DoubleValue";
+        //        case "bool": return "google.protobuf.BoolValue";
+        //        case "decimal": return "google.protobuf.DoubleValue";
+        //    }
+        //}
 
         switch (baseType)
         {
@@ -208,5 +167,26 @@ public class ProtoGenerator
     private bool IsCollectionType(string type)
     {
         return !string.IsNullOrEmpty(type) && (type.StartsWith("List<") || type.StartsWith("ICollection<") || type.StartsWith("IEnumerable<") || type.StartsWith("HashSet<"));
+    }
+
+    private bool IsNullableType(string type)
+    {
+        if (string.IsNullOrWhiteSpace(type))
+        {
+            return false;
+        }
+
+        var trimmed = type.Trim();
+        return trimmed.EndsWith("?", StringComparison.Ordinal) || trimmed.StartsWith("Nullable<", StringComparison.Ordinal);
+    }
+
+    private string ReplaceIgnoreCase(string input, string oldValue, string newValue)
+    {
+        if (string.IsNullOrEmpty(input) || string.IsNullOrEmpty(oldValue))
+        {
+            return input;
+        }
+
+        return Regex.Replace(input, Regex.Escape(oldValue), newValue ?? string.Empty, RegexOptions.IgnoreCase);
     }
 }
