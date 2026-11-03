@@ -62,8 +62,8 @@ namespace CSharpConvertToProto
             await StopWatcherCommand.InitializeAsync(this);
 
             var dte = await GetServiceAsync(typeof(EnvDTE.DTE)) as DTE2;
-            var projectGuid = Service.SettingsStore.ResolveProjectGuid(dte);
-            var settings = Service.SettingsStore.Load(projectGuid);
+            var solutionNameKey = Service.SettingsStore.ResolveSolutionNameKey(dte);
+            var settings = Service.SettingsStore.Load(solutionNameKey);
 
             Service.SettingsStore.SettingsChanged += (s) =>
             {
@@ -78,7 +78,7 @@ namespace CSharpConvertToProto
                     var res = settingsWindow.ShowDialog();
                     if (res == true)
                     {
-                        settings = Service.SettingsStore.Load(projectGuid);
+                        settings = Service.SettingsStore.Load(solutionNameKey);
                     }
                 }
                 catch { }
@@ -93,8 +93,8 @@ namespace CSharpConvertToProto
 
             _watcherEnabled = true;
             var dte = await GetServiceAsync(typeof(EnvDTE.DTE)) as DTE2;
-            var projectGuid = Service.SettingsStore.ResolveProjectGuid(dte);
-            var settings = Service.SettingsStore.Load(projectGuid);
+            var solutionNameKey = Service.SettingsStore.ResolveSolutionNameKey(dte);
+            var settings = Service.SettingsStore.Load(solutionNameKey);
             await OnSettingsChangedAsync(settings);
         }
 
