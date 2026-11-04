@@ -45,12 +45,6 @@ public class ProtoGenerator
             protoBuilder.Append(GenerateEnum(enumNode));
         }
 
-        //var rootNode = classNodes.FirstOrDefault(node => node.Name == rootClassName);
-        //if (rootNode == null)
-        //{
-        //    throw new ArgumentException(string.Format("Classe {0} non trovata.", rootClassName));
-        //}
-
         foreach (var classNode in classNodes.Where(n => !n.IsEnum))
         {
             protoBuilder.Append(GenerateMessage(classNode, classNodes));

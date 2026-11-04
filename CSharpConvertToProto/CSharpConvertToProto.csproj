@@ -50,9 +50,6 @@
     <Compile Include="Service\SettingsStore.cs" />
     <Compile Include="Service\SolutionFolderWatcher.cs" />
     <Compile Include="SettingsCommand.cs" />
-    <Compile Include="Windows\ClassSelectionWindow.xaml.cs">
-      <DependentUpon>ClassSelectionWindow.xaml</DependentUpon>
-    </Compile>
     <Compile Include="ConvertToProtoCommand.cs" />
     <Compile Include="Models\ClassNode.cs" />
     <Compile Include="Models\Enum\ServiceTOAddAtProtoEnum.cs" />
@@ -61,14 +58,8 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="CSharpConvertToProtoPackage.cs" />
     <Compile Include="Service\ProtoGenerator.cs" />
-    <Compile Include="Windows\ServicesSelectorWindow.xaml.cs">
-      <DependentUpon>ServicesSelectorWindow.xaml</DependentUpon>
-    </Compile>
     <Compile Include="Windows\SettingsWindow.xaml.cs">
       <DependentUpon>SettingsWindow.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Windows\SpecifyNamespaceWindow.xaml.cs">
-      <DependentUpon>SpecifyNamespaceWindow.xaml</DependentUpon>
     </Compile>
   </ItemGroup>
   <ItemGroup>
@@ -114,19 +105,7 @@
     <Content Include="Resources\ConvertToProtoCommand.png" />
   </ItemGroup>
   <ItemGroup>
-    <Page Include="Windows\ClassSelectionWindow.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Windows\ServicesSelectorWindow.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
     <Page Include="Windows\SettingsWindow.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Windows\SpecifyNamespaceWindow.xaml">
-      <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
